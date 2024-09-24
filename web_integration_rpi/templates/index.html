@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nulify</title>
+</head>
+<body>
+    <h1>Nulify</h1>
+    <img id="video-feed" src="{{ url_for('video_feed') }}" width="640" height="480">
+
+    <!-- <script>
+        const video = document.getElementById('video');
+        let peer;
+
+        function initPeer() {
+            peer = new SimplePeer({ initiator: true, trickle: false });
+
+            peer.on('signal', data => {
+                console.log('Signal data:', data);
+            });
+
+            peer.on('stream', stream => {
+                video.srcObject = stream;
+                video.play();
+            });
+
+            peer.on('error', err => console.error('Peer error:', err));
+        }
+
+        async function getFrame() {
+            const response = await fetch('/get_frame');
+            const base64Frame = await response.text();
+            if (base64Frame) {
+                const blob = await (await fetch(`data:image/jpeg;base64,${base64Frame}`)).blob();
+                const stream = video.srcObject;
+                const track = stream?.getVideoTracks()[0];
+                if (track) {
+                    const imageCapture = new ImageCapture(track);
+                    const bitmap = await createImageBitmap(blob);
+                    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(bitmap, 0, 0);
+                    track.requestFrame();
+                }
+            }
+            setTimeout(getFrame, 1000 / 30); // Adjust for desired frame rate
+        }
+
+        initPeer();
+        getFrame();
+    </script> -->
+</body>
+</html>

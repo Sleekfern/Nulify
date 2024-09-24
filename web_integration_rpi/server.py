@@ -6,6 +6,7 @@ import logging
 from flask import Flask, render_template, Response, request, jsonify
 import threading
 import base64
+import netifaces
 
 app = Flask(__name__)
 
@@ -92,6 +93,19 @@ def get_frame():
     if frame is not None:
         return base64.b64encode(frame).decode('utf-8')
     return ''
+
+@app.route('/get_ip', methods=['GET'])
+def get_ip():
+    # Get the IP address of the first non-loopback interface
+    interfaces = netifaces.interfaces()
+    ip_address = None
+    for interface in interfaces:
+        if interface != 'lo':  # Exclude loopback interface
+            addrs = netifaces.ifaddresses(interface)
+            if netifaces.AF_INET in addrs:
+                ip_address = addrs[netifaces.AF_INET][0]['addr']
+                break  
+    return jsonify({'ip': ip_address, 'port': 5000})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)

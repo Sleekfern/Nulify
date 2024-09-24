@@ -8,47 +8,18 @@
 <body>
     <h1>Nulify</h1>
     <img id="video-feed" src="{{ url_for('video_feed') }}" width="640" height="480">
+    <a href=" " id="link">for remote monitoring on other devices</a>
 
-    <!-- <script>
-        const video = document.getElementById('video');
-        let peer;
-
-        function initPeer() {
-            peer = new SimplePeer({ initiator: true, trickle: false });
-
-            peer.on('signal', data => {
-                console.log('Signal data:', data);
-            });
-
-            peer.on('stream', stream => {
-                video.srcObject = stream;
-                video.play();
-            });
-
-            peer.on('error', err => console.error('Peer error:', err));
+    <script>
+        async function fetchIp() {
+            const response = await fetch('/get_ip');
+            const data = await response.json();
+            const videoElement = document.getElementById('link');
+            videoElement.href = `http://${data.ip}:${data.port}/video_feed`;
         }
 
-        async function getFrame() {
-            const response = await fetch('/get_frame');
-            const base64Frame = await response.text();
-            if (base64Frame) {
-                const blob = await (await fetch(`data:image/jpeg;base64,${base64Frame}`)).blob();
-                const stream = video.srcObject;
-                const track = stream?.getVideoTracks()[0];
-                if (track) {
-                    const imageCapture = new ImageCapture(track);
-                    const bitmap = await createImageBitmap(blob);
-                    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(bitmap, 0, 0);
-                    track.requestFrame();
-                }
-            }
-            setTimeout(getFrame, 1000 / 30); // Adjust for desired frame rate
-        }
-
-        initPeer();
-        getFrame();
-    </script> -->
+        // Call the fetchIp function when the page loads
+        window.onload = fetchIp;
+    </script>
 </body>
 </html>

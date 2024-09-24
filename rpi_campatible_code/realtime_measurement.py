@@ -24,8 +24,9 @@ def main():
     time.sleep(2)  # Allow camera to warm up
 
     # Load Aruco detector
-    parameters = cv2.aruco.DetectorParameters_create()
-    aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_5X5_50)
+    parameters = cv2.aruco.DetectorParameters()
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
+    aruco_detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 
     # Load Object Detector
     detector = HomogeneousBgDetector()
@@ -33,12 +34,11 @@ def main():
     while True:
         img = picam2.capture_array()
 
-        # Ensure the image is in the correct format for Aruco detection
-        if img.dtype != np.uint8 or len(img.shape) != 3 or img.shape[2] != 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        # Ensure the image is in the correct color format
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
         # Get Aruco marker
-        corners, _, _ = cv2.aruco.detectMarkers(img, aruco_dict, parameters=parameters)
+        corners, _, _ = aruco_detector.detectMarkers(img)
 
         if len(corners) > 0:
             # Draw polygon around the marker

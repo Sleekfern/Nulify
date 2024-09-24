@@ -36,6 +36,9 @@ class VideoCamera:
     def get_frame(self):
         img = self.picam2.capture_array()
 
+        # Ensure the image is in the correct color format
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
         # Aruco marker detection
         corners, _, _ = self.aruco_detector.detectMarkers(img)
         
@@ -60,9 +63,10 @@ class VideoCamera:
                 cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
                             cv2.FONT_HERSHEY_PLAIN, 2, (100, 200, 0), 2)
 
-        src= cv2.flip(img, 1)
-        ret, jpeg = cv2.imencode('.jpg', src)
+        # src = cv2.flip(img, 1)
+        ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
+
 
 video_camera = VideoCamera()
 

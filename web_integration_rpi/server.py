@@ -8,7 +8,7 @@ import threading
 import base64
 import netifaces
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 class HomogeneousBgDetector:
     def __init__(self):
@@ -70,7 +70,7 @@ class VideoCamera:
                 
                 if is_aruco:
                     continue  # Skip processing for ArUco marker
-                
+
                 rect = cv2.minAreaRect(cnt)
                 (x, y), (w, h), angle = rect
                 object_width = w / pixel_cm_ratio

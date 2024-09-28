@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nulify</title>
+</head>
+<body>
+    <h1>Nulify</h1>
+    <img id="video-feed" src="{{ url_for('video_feed') }}" width="640" height="480">
+    <br>
+    <a href=" " id="link">for remote monitoring on other devices</a>
+
+    <h2>Set ArUco Marker Size</h2>
+    <div class="input-group">
+        <label for="aruco-size">ArUco Marker Perimeter (cm):</label>
+        <input type="number" id="aruco-size" step="0.1" value="20">
+    </div>
+    <button onclick="setArucoSize()">Set ArUco Size</button>
+    
+    <h2>Set Size Range</h2>
+    <div class="input-group">
+        <label for="min-width">Min Width:</label>
+        <input type="number" id="min-width" step="0.1" value="0">
+    </div>
+    <div class="input-group">
+        <label for="max-width">Max Width:</label>
+        <input type="number" id="max-width" step="0.1" value="100">
+    </div>
+    <div class="input-group">
+        <label for="min-height">Min Height:</label>
+        <input type="number" id="min-height" step="0.1" value="0">
+    </div>
+    <div class="input-group">
+        <label for="max-height">Max Height:</label>
+        <input type="number" id="max-height" step="0.1" value="100">
+    </div>
+    <button onclick="setSizeRange()">Set Range</button>
+    <button onclick="resetSizeRange()">Reset Range</button>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

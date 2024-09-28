@@ -48,5 +48,25 @@ async function resetSizeRange() {
     }
 }
 
+async function setArucoSize() {
+    const arucoSize = document.getElementById('aruco-size').value;
+
+    const response = await fetch('/set_aruco_size', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            aruco_size: arucoSize
+        }),
+    });
+
+    const result = await response.json();
+    if (result.status === 'success') {
+        alert('Aruco size set successfully');
+    } else {
+        alert('Failed to set Aruco size');
+    }
+}
 
 window.onload = fetchIp;

@@ -45,6 +45,10 @@ class VideoCamera:
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
         self.parameters = cv2.aruco.DetectorParameters()
         self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
+        self.aruco_real_size = 20
+
+    def set_aruco_size(self, aruco_size):
+        self.aruco_real_size = aruco_size
 
     def __del__(self):
         self.picam2.stop()
@@ -62,7 +66,7 @@ class VideoCamera:
             int_corners = np.int0(corners)
             cv2.polylines(img, int_corners, True, (0, 255, 0), 5)
             aruco_perimeter = cv2.arcLength(corners[0], True)
-            pixel_cm_ratio = aruco_perimeter / 20
+            pixel_cm_ratio = aruco_perimeter / self.aruco_real_size
 
             contours = self.detector.detect_objects(img)
             for cnt in contours:
@@ -151,6 +155,12 @@ def reset_size_range():
     video_camera.set_size_range(0, float('inf'), 0, float('inf'))  # Reset to default range
     return jsonify({'status': 'success'})
 
+@app.route('/set_aruco_size', methods=['POST'])
+def set_aruco_size():
+    data = request.json
+    aruco_size = float(data['aruco_size'])
+    video_camera.set_aruco_size(aruco_size)
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)

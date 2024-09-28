@@ -10,6 +10,13 @@
     <img id="video-feed" src="{{ url_for('video_feed') }}" width="640" height="480">
     <br>
     <a href=" " id="link">for remote monitoring on other devices</a>
+
+    <h2>Set ArUco Marker Size</h2>
+    <div class="input-group">
+        <label for="aruco-size">ArUco Marker Perimeter (cm):</label>
+        <input type="number" id="aruco-size" step="0.1" value="20">
+    </div>
+    <button onclick="setArucoSize()">Set ArUco Size</button>
     
     <h2>Set Size Range</h2>
     <div class="input-group">

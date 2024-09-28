@@ -146,5 +146,11 @@ def set_size_range():
     video_camera.set_size_range(min_width, max_width, min_height, max_height)
     return jsonify({'status': 'success'})
 
+@app.route('/reset_size_range', methods=['POST'])
+def reset_size_range():
+    video_camera.set_size_range(0, float('inf'), 0, float('inf'))  # Reset to default range
+    return jsonify({'status': 'success'})
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)

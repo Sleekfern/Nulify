@@ -33,14 +33,11 @@ async function setSizeRange() {
 }
 
 async function resetSizeRange() {
-    const response = await fetch('/set_size_range', {
+    const response = await fetch('/reset_size_range', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            reset: true
-        }),
     });
 
     const result = await response.json();
@@ -50,5 +47,6 @@ async function resetSizeRange() {
         alert('Failed to reset size range');
     }
 }
+
 
 window.onload = fetchIp;

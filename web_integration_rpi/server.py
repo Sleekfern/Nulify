@@ -11,6 +11,18 @@ import netifaces
 app = Flask(__name__)
 
 class HomogeneousBgDetector:
+    def __init__(self):
+        self.min_width = 0
+        self.max_width = float('inf')
+        self.min_height = 0
+        self.max_height = float('inf')
+
+    def set_size_range(self, min_width, max_width, min_height, max_height):
+        self.min_width = min_width
+        self.max_width = max_width
+        self.min_height = min_height
+        self.max_height = max_height
+
     def detect_objects(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         mask = cv2.adaptiveThreshold(
@@ -18,6 +30,9 @@ class HomogeneousBgDetector:
         )
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         return [cnt for cnt in contours if cv2.contourArea(cnt) > 2000]
+
+    def is_object_in_range(self, width, height):
+        return (self.min_width <= width <= self.max_width) and (self.min_height <= height <= self.max_height)
 
 class VideoCamera:
     def __init__(self):
@@ -51,23 +66,38 @@ class VideoCamera:
 
             contours = self.detector.detect_objects(img)
             for cnt in contours:
+                is_aruco = any(cv2.pointPolygonTest(corners[0], tuple(map(int, cnt[0][0])), False) >= 0 for corner in corners)
+                
+                if is_aruco:
+                    continue  # Skip processing for ArUco marker
+                
                 rect = cv2.minAreaRect(cnt)
                 (x, y), (w, h), angle = rect
                 object_width = w / pixel_cm_ratio
                 object_height = h / pixel_cm_ratio
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
-                cv2.circle(img, (int(x), int(y)), 5, (0, 0, 255), -1)
-                cv2.polylines(img, [box], True, (255, 0, 0), 2)
+                
+                if self.detector.is_object_in_range(object_width, object_height):
+                    color = (0, 255, 0)  # Green for objects in range
+                else:
+                    color = (0, 0, 255)  # Red for objects out of range
+                    # Draw cross sign
+                    cv2.line(img, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), color, 2)
+                    cv2.line(img, (int(x-w/2), int(y+h/2)), (int(x+w/2), int(y-h/2)), color, 2)
+                
+                cv2.circle(img, (int(x), int(y)), 5, color, -1)
+                cv2.polylines(img, [box], True, color, 2)
                 cv2.putText(img, f"Width {object_width:.1f} cm", (int(x - 100), int(y - 20)),
-                            cv2.FONT_HERSHEY_PLAIN, 2, (100, 200, 0), 2)
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
                 cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
-                            cv2.FONT_HERSHEY_PLAIN, 2, (100, 200, 0), 2)
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
 
-        # src = cv2.flip(img, 1)
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
 
+    def set_size_range(self, min_width, max_width, min_height, max_height):
+        self.detector.set_size_range(min_width, max_width, min_height, max_height)
 
 video_camera = VideoCamera()
 
@@ -96,16 +126,25 @@ def get_frame():
 
 @app.route('/get_ip', methods=['GET'])
 def get_ip():
-    # Get the IP address of the first non-loopback interface
     interfaces = netifaces.interfaces()
     ip_address = None
     for interface in interfaces:
-        if interface != 'lo':  # Exclude loopback interface
+        if interface != 'lo':
             addrs = netifaces.ifaddresses(interface)
             if netifaces.AF_INET in addrs:
                 ip_address = addrs[netifaces.AF_INET][0]['addr']
                 break  
     return jsonify({'ip': ip_address, 'port': 5000})
+
+@app.route('/set_size_range', methods=['POST'])
+def set_size_range():
+    data = request.json
+    min_width = float(data['min_width'])
+    max_width = float(data['max_width'])
+    min_height = float(data['min_height'])
+    max_height = float(data['max_height'])
+    video_camera.set_size_range(min_width, max_width, min_height, max_height)
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)

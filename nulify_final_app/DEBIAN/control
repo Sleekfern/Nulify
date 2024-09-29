@@ -1,0 +1,9 @@
+Package: nulify
+Version: 1.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3, python3-tk, python3-pip
+Maintainer: Your Name <your.email@example.com>
+Description: Nulify - Object Size Measurement Tool
+ This application helps measure object sizes using both online and offline modes.

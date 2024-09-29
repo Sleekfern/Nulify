@@ -51,7 +51,7 @@ def run_offline():
         
         # Convert inputs to float and run the subprocess
         command = [
-            "python3", "nulify_final_app/offline.py",
+            "python3", "/home/armkh/Documents/code/Nulify/nulify/usr/share/nulify/offline.py",
             str(float(min_width)), str(float(max_width)),
             str(float(min_height)), str(float(max_height)),
             str(float(aruco_size))
@@ -87,7 +87,7 @@ def run_offline():
 
 
 def run_online():
-    process = subprocess.Popen(["python3", "nulify_final_app/server.py"])
+    process = subprocess.Popen(["python3", "/home/armkh/Documents/code/Nulify/nulify/usr/share/nulify/server.py"])
     subprocesses.append(process)
 
 def close_app():

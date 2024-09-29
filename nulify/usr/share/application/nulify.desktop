@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Nulify
 Exec=nulify
-Icon=/usr/share/nulify/icon.png
+Icon=nulify/usr/share/nulify/nulify_icon.png
 Type=Application
 Categories=Utility;
+Name[en_GB]=nulify

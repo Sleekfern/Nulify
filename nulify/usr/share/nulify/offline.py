@@ -113,7 +113,7 @@ def main():
                             cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
 
         # Display the resulting frame
-        cv2.imshow("Frame", img)
+        cv2.imshow("Nulify Offline", img)
 
         # Press 'q' to quit
         if cv2.waitKey(1) & 0xFF == ord('q'):

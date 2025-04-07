@@ -75,9 +75,38 @@
             color: #00aaff;
         }
 
-        .clear-button {
-            max-width: 200px;
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
             margin: 20px auto;
+            max-width: 800px;
+        }
+
+        .clear-button, .export-button {
+            max-width: 200px;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-accepted {
+            background-color: #00aaff;
+            color: #1a1a1a;
+        }
+
+        .status-rejected {
+            background-color: #ff4444;
+            color: #f4f4f9;
+        }
+
+        .status-unchecked {
+            background-color: #444;
+            color: #f4f4f9;
         }
     </style>
 </head>
@@ -91,7 +120,10 @@
         <h1>NULIFY</h1>
         <h2 style="text-align: center; color: #f4f4f9;">Stored Measurements</h2>
 
-        <button onclick="clearMeasurements()" class="clear-button">Clear All Measurements</button>
+        <div class="button-container">
+            <button onclick="clearMeasurements()" class="clear-button">Clear All Measurements</button>
+            <button onclick="exportToExcel()" class="export-button">Export to Excel</button>
+        </div>
 
         <table class="measurements-table">
             <thead>
@@ -99,6 +131,7 @@
                     <th>Object</th>
                     <th>Width (cm)</th>
                     <th>Height (cm)</th>
+                    <th>Status</th>
                     <th>Mode</th>
                     <th>Time</th>
                 </tr>
@@ -168,6 +201,16 @@
             return "Unknown Object";
         }
 
+        function getObjectStatus(width, height, minWidth, maxWidth, minHeight, maxHeight) {
+            // Check if the object is within the specified range
+            if (width >= minWidth && width <= maxWidth && 
+                height >= minHeight && height <= maxHeight) {
+                return "accepted";
+            } else {
+                return "rejected";
+            }
+        }
+
         function loadMeasurements() {
             fetch('/api/measurements/all')
                 .then(response => response.json())
@@ -177,11 +220,21 @@
                     
                     data.forEach(measurement => {
                         const objectName = getObjectName(measurement.width, measurement.height);
+                        const status = getObjectStatus(
+                            measurement.width, 
+                            measurement.height, 
+                            measurement.min_width || 0, 
+                            measurement.max_width || 100, 
+                            measurement.min_height || 0, 
+                            measurement.max_height || 100
+                        );
+                        
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td class="object-name">${objectName}</td>
                             <td>${measurement.width.toFixed(1)}</td>
                             <td>${measurement.height.toFixed(1)}</td>
+                            <td><span class="status-badge status-${status}">${status}</span></td>
                             <td><span class="mode-badge mode-${measurement.mode}">${measurement.mode}</span></td>
                             <td>${new Date(measurement.timestamp).toLocaleString()}</td>
                         `;
@@ -204,6 +257,52 @@
                     })
                     .catch(error => console.error('Error clearing measurements:', error));
             }
+        }
+
+        function exportToExcel() {
+            fetch('/api/measurements/all')
+                .then(response => response.json())
+                .then(data => {
+                    // Create CSV content
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    
+                    // Add headers
+                    csvContent += "Object,Width (cm),Height (cm),Status,Mode,Timestamp\n";
+                    
+                    // Add data rows
+                    data.forEach(measurement => {
+                        const objectName = getObjectName(measurement.width, measurement.height);
+                        const status = getObjectStatus(
+                            measurement.width, 
+                            measurement.height, 
+                            measurement.min_width || 0, 
+                            measurement.max_width || 100, 
+                            measurement.min_height || 0, 
+                            measurement.max_height || 100
+                        );
+                        
+                        const row = [
+                            objectName,
+                            measurement.width.toFixed(1),
+                            measurement.height.toFixed(1),
+                            status,
+                            measurement.mode,
+                            new Date(measurement.timestamp).toLocaleString()
+                        ];
+                        
+                        csvContent += row.join(",") + "\n";
+                    });
+                    
+                    // Create download link
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "nulify_measurements.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => console.error('Error exporting measurements:', error));
         }
 
         // Load measurements when the page loads

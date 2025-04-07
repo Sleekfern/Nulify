@@ -4,7 +4,14 @@ from picamera2 import Picamera2
 import time
 import logging
 import sys
-from data.db_handler import DatabaseHandler
+import os
+
+# Add the parent directory to the Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(os.path.dirname(current_dir))
+sys.path.append(parent_dir)
+
+from nulify.usr.share.nulify.data.db_handler import DatabaseHandler
 
 logging.basicConfig(level=logging.DEBUG)
 

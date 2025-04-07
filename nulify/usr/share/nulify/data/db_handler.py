@@ -1,10 +1,22 @@
 import sqlite3
 import json
 from datetime import datetime
+import os
 
 class DatabaseHandler:
-    def __init__(self, db_path='data/measurements.db'):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        if db_path is None:
+            # Get the directory where the script is located
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            # Create data directory if it doesn't exist
+            os.makedirs(current_dir, exist_ok=True)
+            # Set the database path
+            self.db_path = os.path.join(current_dir, 'measurements.db')
+        else:
+            self.db_path = db_path
+            # Create directory for custom path if it doesn't exist
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        
         self.init_db()
 
     def init_db(self):

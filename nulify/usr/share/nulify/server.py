@@ -7,10 +7,28 @@ from flask import Flask, render_template, Response, request, jsonify
 import threading
 import base64
 import netifaces
+import os
 from data.database import ObjectDatabase
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(os.path.expanduser('~/.nulify/nulify.log'))
+    ]
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-db = ObjectDatabase()
+
+try:
+    db = ObjectDatabase()
+    logger.info("Database initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {str(e)}")
+    db = None
 
 class HomogeneousBgDetector:
     def __init__(self):

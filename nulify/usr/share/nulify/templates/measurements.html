@@ -4,107 +4,170 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nulify - Measurements</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        body {
-            background-color: #1a1a1a;
-            color: #f4f4f9;
+        .measurements-container {
+            flex-direction: column;
+            align-items: center;
         }
-        .navbar {
+        
+        .measurements-table {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            border-collapse: collapse;
             background-color: #1a1a1a;
+            box-shadow: 0 4px 10px #00000080;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .measurements-table th,
+        .measurements-table td {
+            padding: 15px;
+            text-align: left;
             border-bottom: 1px solid #333;
         }
-        .card {
-            background-color: #2a2a2a;
-            border: 1px solid #333;
+
+        .measurements-table th {
+            background-color: #00aaff;
+            color: #1a1a1a;
+            font-weight: bold;
         }
-        .table {
+
+        .measurements-table tr:hover {
+            background-color: #222;
+        }
+
+        .mode-badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .mode-online {
+            background-color: #00aaff;
+            color: #1a1a1a;
+        }
+
+        .mode-offline {
+            background-color: #444;
             color: #f4f4f9;
         }
-        .table thead th {
-            border-color: #333;
-            background-color: #1a1a1a;
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
         }
-        .table td {
-            border-color: #333;
+
+        .nav-links a {
+            color: #00aaff;
+            text-decoration: none;
+            margin: 0 10px;
         }
-        .btn-primary {
-            background-color: #00aaff;
-            border-color: #00aaff;
+
+        .nav-links a:hover {
+            text-decoration: underline;
         }
-        .btn-primary:hover {
-            background-color: #0088cc;
-            border-color: #0088cc;
+
+        .object-name {
+            font-weight: bold;
+            color: #00aaff;
         }
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-        .btn-danger:hover {
-            background-color: #bb2d3b;
-            border-color: #bb2d3b;
-        }
-        .mode-badge {
-            padding: 0.25em 0.5em;
-            border-radius: 0.25rem;
-            font-size: 0.875em;
-        }
-        .mode-online {
-            background-color: #198754;
-        }
-        .mode-offline {
-            background-color: #6c757d;
+
+        .clear-button {
+            max-width: 200px;
+            margin: 20px auto;
         }
     </style>
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <img src="/static/logo.png" alt="Nulify" height="30">
-            </a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/">Home</a>
-                <a class="nav-link active" href="/measurements">Measurements</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="row mb-4">
-            <div class="col">
-                <h1>Stored Measurements</h1>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-danger" onclick="clearMeasurements()">
-                    <i class="bi bi-trash"></i> Clear All
-                </button>
-            </div>
+    <div class="container measurements-container">
+        <div class="nav-links">
+            <a href="/">← Back to Camera</a>
         </div>
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Width (cm)</th>
-                                <th>Height (cm)</th>
-                                <th>Mode</th>
-                                <th>Timestamp</th>
-                            </tr>
-                        </thead>
-                        <tbody id="measurementsTable">
-                            <!-- Data will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <h1>NULIFY</h1>
+        <h2 style="text-align: center; color: #f4f4f9;">Stored Measurements</h2>
+
+        <button onclick="clearMeasurements()" class="clear-button">Clear All Measurements</button>
+
+        <table class="measurements-table">
+            <thead>
+                <tr>
+                    <th>Object</th>
+                    <th>Width (cm)</th>
+                    <th>Height (cm)</th>
+                    <th>Mode</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="measurementsTable">
+                <!-- Data will be populated by JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <script>
+        function getObjectName(width, height) {
+            // Define size ranges for industrial objects
+            const objects = [
+                // Hex nuts - various standard sizes
+                { name: "M6 Hex Nut", minW: 0.9, maxW: 1.1, minH: 0.9, maxH: 1.1 },
+                { name: "M8 Hex Nut", minW: 1.2, maxW: 1.4, minH: 1.2, maxH: 1.4 },
+                { name: "M10 Hex Nut", minW: 1.5, maxW: 1.7, minH: 1.5, maxH: 1.7 },
+                { name: "M12 Hex Nut", minW: 1.8, maxW: 2.0, minH: 1.8, maxH: 2.0 },
+                { name: "M16 Hex Nut", minW: 2.3, maxW: 2.5, minH: 2.3, maxH: 2.5 },
+                
+                // Bolts - various lengths
+                { name: "M6 Bolt", minW: 0.5, maxW: 0.7, minH: 2.0, maxH: 10.0 },
+                { name: "M8 Bolt", minW: 0.7, maxW: 0.9, minH: 2.5, maxH: 12.0 },
+                { name: "M10 Bolt", minW: 0.9, maxW: 1.1, minH: 3.0, maxH: 15.0 },
+                { name: "M12 Bolt", minW: 1.1, maxW: 1.3, minH: 3.5, maxH: 18.0 },
+                
+                // Steel Rods - standard diameters
+                { name: "6mm Steel Rod", minW: 0.5, maxW: 0.7, minH: 10.0, maxH: 100.0 },
+                { name: "8mm Steel Rod", minW: 0.7, maxW: 0.9, minH: 10.0, maxH: 100.0 },
+                { name: "10mm Steel Rod", minW: 0.9, maxW: 1.1, minH: 10.0, maxH: 100.0 },
+                { name: "12mm Steel Rod", minW: 1.1, maxW: 1.3, minH: 10.0, maxH: 100.0 },
+                
+                // Pipe Sections - standard sizes
+                { name: "1/2\" Pipe Section", minW: 2.0, maxW: 2.2, minH: 2.0, maxH: 30.0 },
+                { name: "3/4\" Pipe Section", minW: 2.5, maxW: 2.7, minH: 2.5, maxH: 30.0 },
+                { name: "1\" Pipe Section", minW: 3.2, maxW: 3.4, minH: 3.2, maxH: 30.0 },
+                { name: "1.5\" Pipe Section", minW: 4.7, maxW: 4.9, minH: 4.7, maxH: 30.0 },
+                
+                // Flat Steel/Metal Plates
+                { name: "Small Metal Plate", minW: 5.0, maxW: 10.0, minH: 5.0, maxH: 10.0 },
+                { name: "Medium Metal Plate", minW: 10.0, maxW: 20.0, minH: 10.0, maxH: 20.0 },
+                { name: "Large Metal Plate", minW: 20.0, maxW: 30.0, minH: 20.0, maxH: 30.0 }
+            ];
+
+            // First try exact match
+            for (const obj of objects) {
+                if (width >= obj.minW && width <= obj.maxW && 
+                    height >= obj.minH && height <= obj.maxH) {
+                    return obj.name;
+                }
+            }
+
+            // If no exact match, try to categorize by type
+            if (width === height && width <= 3.0) {
+                return "Hex Nut";
+            } else if (width < 2.0 && height > width * 3) {
+                return "Bolt";
+            } else if (width < 2.0 && height > width * 10) {
+                return "Steel Rod";
+            } else if (Math.abs(width - height) < 1.0 && width > 2.0) {
+                return "Pipe Section";
+            } else if (width > 5.0 && height > 5.0) {
+                return "Metal Plate";
+            }
+
+            return "Unknown Object";
+        }
+
         function loadMeasurements() {
             fetch('/api/measurements/all')
                 .then(response => response.json())
@@ -113,8 +176,10 @@
                     tableBody.innerHTML = '';
                     
                     data.forEach(measurement => {
+                        const objectName = getObjectName(measurement.width, measurement.height);
                         const row = document.createElement('tr');
                         row.innerHTML = `
+                            <td class="object-name">${objectName}</td>
                             <td>${measurement.width.toFixed(1)}</td>
                             <td>${measurement.height.toFixed(1)}</td>
                             <td><span class="mode-badge mode-${measurement.mode}">${measurement.mode}</span></td>

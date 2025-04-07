@@ -145,3 +145,89 @@ button {
         width: 100%;
     }
 }
+
+.measurements {
+    margin-top: 20px;
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.measurements h2 {
+    color: #00aaff;
+    margin-bottom: 20px;
+}
+
+.measurements-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.measurements-controls button {
+    width: auto;
+    padding: 8px 20px;
+}
+
+.measurements-table {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+th {
+    background-color: #333;
+    color: #00aaff;
+    font-weight: bold;
+}
+
+tr:hover {
+    background-color: #333;
+}
+
+.in-range {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.out-of-range {
+    color: #f44336;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .measurements {
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    .measurements-controls {
+        flex-direction: column;
+    }
+
+    .measurements-controls button {
+        width: 100%;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+}

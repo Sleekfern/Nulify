@@ -49,6 +49,31 @@
             <button onclick="setSizeRange()">Set Range</button>
             <button onclick="resetSizeRange()">Reset</button>
         </div>
+
+        <!-- Measurements Section -->
+        <div class="measurements">
+            <h2>Recent Measurements</h2>
+            <div class="measurements-controls">
+                <button onclick="refreshMeasurements()">Refresh</button>
+                <button onclick="clearOldMeasurements()">Clear Old</button>
+            </div>
+            <div class="measurements-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Width (cm)</th>
+                            <th>Height (cm)</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                            <th>Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody id="measurements-body">
+                        <!-- Measurements will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

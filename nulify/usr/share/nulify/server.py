@@ -7,18 +7,10 @@ from flask import Flask, render_template, Response, request, jsonify
 import threading
 import base64
 import netifaces
-import os
-import sys
-
-# Add the parent directory to the Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(parent_dir)
-
-from nulify.usr.share.nulify.data.db_handler import DatabaseHandler
+from data.database import ObjectDatabase
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-db = DatabaseHandler()
+db = ObjectDatabase()
 
 class HomogeneousBgDetector:
     def __init__(self):
@@ -89,25 +81,28 @@ class VideoCamera:
                 (x, y), (w, h), angle = rect
                 object_width = w / pixel_cm_ratio
                 object_height = h / pixel_cm_ratio
+
+                # Store object in database if in range
+                if self.detector.is_object_in_range(object_width, object_height):
+                    db.add_object(object_width, object_height, "online")
+                
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
                 
-                is_in_range = self.detector.is_object_in_range(object_width, object_height)
-                color = (0, 255, 0) if is_in_range else (0, 0, 255)
+                if self.detector.is_object_in_range(object_width, object_height):
+                    color = (0, 255, 0)  # Green for objects in range
+                else:
+                    color = (0, 0, 255)  # Red for objects out of range
+                    # Draw cross sign
+                    cv2.line(img, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), color, 2)
+                    cv2.line(img, (int(x-w/2), int(y+h/2)), (int(x+w/2), int(y-h/2)), color, 2)
                 
-                # Store measurement in database
-                if db.add_measurement(object_width, object_height, is_in_range, 'online'):
-                    # Draw cross sign for out of range objects
-                    if not is_in_range:
-                        cv2.line(img, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), color, 2)
-                        cv2.line(img, (int(x-w/2), int(y+h/2)), (int(x+w/2), int(y-h/2)), color, 2)
-                    
-                    cv2.circle(img, (int(x), int(y)), 5, color, -1)
-                    cv2.polylines(img, [box], True, color, 2)
-                    cv2.putText(img, f"Width {object_width:.1f} cm", (int(x - 100), int(y - 20)),
-                                cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
-                    cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
-                                cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
+                cv2.circle(img, (int(x), int(y)), 5, color, -1)
+                cv2.polylines(img, [box], True, color, 2)
+                cv2.putText(img, f"Width {object_width:.1f} cm", (int(x - 100), int(y - 20)),
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
+                cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
 
         ret, jpeg = cv2.imencode('.jpg', img)
         return jpeg.tobytes()
@@ -120,6 +115,35 @@ video_camera = VideoCamera()
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/measurements')
+def measurements():
+    return render_template('measurements.html')
+
+@app.route('/api/measurements/recent')
+def get_recent_measurements():
+    measurements = db.get_recent_objects(limit=10)
+    return jsonify([{
+        'width': m[0],
+        'height': m[1],
+        'timestamp': m[2],
+        'mode': m[3]
+    } for m in measurements])
+
+@app.route('/api/measurements/all')
+def get_all_measurements():
+    measurements = db.get_all_objects()
+    return jsonify([{
+        'width': m[0],
+        'height': m[1],
+        'timestamp': m[2],
+        'mode': m[3]
+    } for m in measurements])
+
+@app.route('/api/measurements/clear', methods=['POST'])
+def clear_measurements():
+    success = db.clear_database()
+    return jsonify({'status': 'success' if success else 'error'})
 
 def gen(camera):
     while True:
@@ -172,28 +196,6 @@ def set_aruco_size():
     data = request.json
     aruco_size = float(data['aruco_size'])
     video_camera.set_aruco_size(aruco_size)
-    return jsonify({'status': 'success'})
-
-@app.route('/measurements')
-def get_measurements():
-    measurements = db.get_recent_measurements()
-    return jsonify({
-        'measurements': [
-            {
-                'width': m[0],
-                'height': m[1],
-                'timestamp': m[2],
-                'is_in_range': m[3],
-                'measurement_mode': m[4]
-            }
-            for m in measurements
-        ]
-    })
-
-@app.route('/clear_old_measurements', methods=['POST'])
-def clear_old_measurements():
-    days = request.json.get('days', 7)
-    db.clear_old_measurements(days)
     return jsonify({'status': 'success'})
 
 if __name__ == '__main__':

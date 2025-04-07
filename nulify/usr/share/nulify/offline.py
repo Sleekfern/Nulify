@@ -4,14 +4,7 @@ from picamera2 import Picamera2
 import time
 import logging
 import sys
-import os
-
-# Add the parent directory to the Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(parent_dir)
-
-from nulify.usr.share.nulify.data.db_handler import DatabaseHandler
+from data.database import ObjectDatabase
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -48,7 +41,7 @@ def main():
     aruco_size = float(sys.argv[5])
 
     # Initialize database
-    db = DatabaseHandler()
+    db = ObjectDatabase()
 
     # Initialize Raspberry Pi camera
     picam2 = Picamera2()
@@ -103,27 +96,29 @@ def main():
                 object_width = w / pixel_cm_ratio
                 object_height = h / pixel_cm_ratio
 
+                # Store object in database if in range
+                if detector.is_object_in_range(object_width, object_height):
+                    db.add_object(object_width, object_height, "offline")
+
                 # Display rectangle
                 box = cv2.boxPoints(rect)
                 box = np.int0(box)
 
                 # Check if object size is within the given range
-                is_in_range = detector.is_object_in_range(object_width, object_height)
-                color = (0, 255, 0) if is_in_range else (0, 0, 255)
+                if detector.is_object_in_range(object_width, object_height):
+                    color = (0, 255, 0)  # Green for objects in range
+                else:
+                    color = (0, 0, 255)  # Red for objects out of range
+                    # Draw cross sign for objects out of range
+                    cv2.line(img, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), color, 2)
+                    cv2.line(img, (int(x - w / 2), int(y + h / 2)), (int(x + w / 2), int(y - h / 2)), color, 2)
 
-                # Store measurement in database
-                if db.add_measurement(object_width, object_height, is_in_range, 'offline'):
-                    # Draw cross sign for out of range objects
-                    if not is_in_range:
-                        cv2.line(img, (int(x - w / 2), int(y - h / 2)), (int(x + w / 2), int(y + h / 2)), color, 2)
-                        cv2.line(img, (int(x - w / 2), int(y + h / 2)), (int(x + w / 2), int(y - h / 2)), color, 2)
-
-                    cv2.circle(img, (int(x), int(y)), 5, color, -1)
-                    cv2.polylines(img, [box], True, color, 2)
-                    cv2.putText(img, f"Width {object_width:.1f} cm", (int(x - 100), int(y - 20)),
-                                cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
-                    cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
-                                cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
+                cv2.circle(img, (int(x), int(y)), 5, color, -1)
+                cv2.polylines(img, [box], True, color, 2)
+                cv2.putText(img, f"Width {object_width:.1f} cm", (int(x - 100), int(y - 20)),
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
+                cv2.putText(img, f"Height {object_height:.1f} cm", (int(x - 100), int(y + 15)),
+                            cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
 
         # Display the resulting frame
         cv2.imshow("Nulify Offline", img)

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nulify - Measurements</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #f4f4f9;
+        }
+        .navbar {
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+        .card {
+            background-color: #2a2a2a;
+            border: 1px solid #333;
+        }
+        .table {
+            color: #f4f4f9;
+        }
+        .table thead th {
+            border-color: #333;
+            background-color: #1a1a1a;
+        }
+        .table td {
+            border-color: #333;
+        }
+        .btn-primary {
+            background-color: #00aaff;
+            border-color: #00aaff;
+        }
+        .btn-primary:hover {
+            background-color: #0088cc;
+            border-color: #0088cc;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+            border-color: #bb2d3b;
+        }
+        .mode-badge {
+            padding: 0.25em 0.5em;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+        }
+        .mode-online {
+            background-color: #198754;
+        }
+        .mode-offline {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/static/logo.png" alt="Nulify" height="30">
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Home</a>
+                <a class="nav-link active" href="/measurements">Measurements</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h1>Stored Measurements</h1>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-danger" onclick="clearMeasurements()">
+                    <i class="bi bi-trash"></i> Clear All
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Width (cm)</th>
+                                <th>Height (cm)</th>
+                                <th>Mode</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="measurementsTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadMeasurements() {
+            fetch('/api/measurements/all')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('measurementsTable');
+                    tableBody.innerHTML = '';
+                    
+                    data.forEach(measurement => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${measurement.width.toFixed(1)}</td>
+                            <td>${measurement.height.toFixed(1)}</td>
+                            <td><span class="mode-badge mode-${measurement.mode}">${measurement.mode}</span></td>
+                            <td>${new Date(measurement.timestamp).toLocaleString()}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading measurements:', error));
+        }
+
+        function clearMeasurements() {
+            if (confirm('Are you sure you want to clear all measurements?')) {
+                fetch('/api/measurements/clear', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            loadMeasurements();
+                        } else {
+                            alert('Error clearing measurements');
+                        }
+                    })
+                    .catch(error => console.error('Error clearing measurements:', error));
+            }
+        }
+
+        // Load measurements when the page loads
+        document.addEventListener('DOMContentLoaded', loadMeasurements);
+
+        // Refresh measurements every 5 seconds
+        setInterval(loadMeasurements, 5000);
+    </script>
+</body>
+</html> 
